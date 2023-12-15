@@ -1,10 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/utsname.h>
-#include <unistd.h>
 #include <time.h>
 #include <stdarg.h>
 #include <string.h>
+
+#ifdef _WIN32
+#include <wdm.h>
+#include <winsock.h>
+#include <winbase.h>
+#else
+#include <sys/utsname.h>
+#include <unistd.h>
+#endif /* _WIN32 */
 
 #include "config.h"
 #include "defs.h"
@@ -54,19 +61,29 @@ int main(int argc, char **argv)
         art = arts[0].art;
     }
 
-    struct utsname uname_buf;
     char hostname[max_hostname_length];
     char username[max_username_length];
     char uptime[max_uptime_length];
+#ifdef _WIN32
+    RTL_OSVERSIONINFOW version_buffer = {.dwOSVersionInfoSize = sizeof(RTL_OSVERSIONINFOW)};
+    RtlGetVersion(&version_buffer);
+    GetUserNameA(username, max_username_length);
+#else
+    struct utsname uname_buf;
 
-    gethostname(hostname, max_hostname_length);
     getlogin_r(username, max_username_length);
-    getuptime(uptime, max_uptime_length);
     uname(&uname_buf);
+#endif
+    gethostname(hostname, max_hostname_length);
+    getuptime(uptime, max_uptime_length);
 
     printf("%s %s@%s\n", art[0], username, hostname);
     printf("%s --\n",    art[1]);
+#ifdef _WIN32
+    printf("%s NT %u.%u %s\n", art[2], version_buffer.dwMajorVersion, version_buffer.dwMinorVersion, version_buffer.szCSDVersion);
+#else
     printf("%s %s %s\n", art[2], uname_buf.sysname, uname_buf.release);
+#endif
     printf("%s %s\n",    art[3], uptime);
     return 0;
 }
