@@ -5,8 +5,9 @@
 #include <string.h>
 
 #ifdef _WIN32
-#include <wdm.h>
+#include <sysinfoapi.h>
 #include <winsock.h>
+#include <Lm.h>
 #include <winbase.h>
 #else
 #include <sys/utsname.h>
@@ -27,8 +28,13 @@ void die(int code, char *fmt, ...)
 
 void getuptime(char *buffer, int max_length)
 {
+#ifdef _WIN32
+#define uptime.tv_sec uptime_seconds
+    long long uptime_seconds = GetTickCount64() / 1000;
+#else
     struct timespec uptime;
     clock_gettime(CLOCK_BOOTTIME, &uptime);
+#endif /* _WIN32 */
     int days    = uptime.tv_sec / 86400;
     int hours   = uptime.tv_sec / 3600 % 24;
     int minutes = uptime.tv_sec / 60 % 60;
@@ -43,6 +49,9 @@ void getuptime(char *buffer, int max_length)
     else
         snprintf(buffer, max_length, "Up %d days, %d hours, %d minutes", days, hours, minutes);
 }
+#ifdef _WIN32
+#undef uptime.tv_sec
+#endif /* _WIN32 */
 
 int main(int argc, char **argv)
 {
@@ -65,25 +74,25 @@ int main(int argc, char **argv)
     char username[MAX_USERNAME_LENGTH];
     char uptime[MAX_UPTIME_LENGTH];
 #ifdef _WIN32
-    RTL_OSVERSIONINFOW version_buffer = {.dwOSVersionInfoSize = sizeof(RTL_OSVERSIONINFOW)};
-    RtlGetVersion(&version_buffer);
+    SERVER_INFO_101 host_info;
+    NetServerGetInfo(NULL, 101, &host_info);
     GetUserNameA(username, MAX_USERNAME_LENGTH);
 #else
     struct utsname uname_buf;
 
     getlogin_r(username, MAX_USERNAME_LENGTH);
     uname(&uname_buf);
-#endif
+#endif /* _WIN32 */
     gethostname(hostname, MAX_HOSTNAME_LENGTH);
     getuptime(uptime, MAX_UPTIME_LENGTH);
 
     printf("%s %s@%s\n", art[0], username, hostname);
     printf("%s --\n",    art[1]);
 #ifdef _WIN32
-    printf("%s NT %u.%u %s\n", art[2], version_buffer.dwMajorVersion, version_buffer.dwMinorVersion, version_buffer.szCSDVersion);
+    printf("%s NT %d.%d\n", art[2], host_info.sv101_version_major & MAJOR_VERSION_MASK, host_info.sv101_version_minor);
 #else
     printf("%s %s %s\n", art[2], uname_buf.sysname, uname_buf.release);
-#endif
+#endif /* _WIN32 */
     printf("%s %s\n",    art[3], uptime);
     return 0;
 }
