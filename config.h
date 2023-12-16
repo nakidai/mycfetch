@@ -1,8 +1,8 @@
 #include "defs.h"
 
-const int max_username_length = 128;
-const int max_hostname_length = 128;
-const int max_uptime_length   = 40;
+#define MAX_USERNAME_LENGTH 128
+#define MAX_HOSTNAME_LENGTH 128
+#define MAX_UPTIME_LENGTH   40
 
 struct art_entry arts[] = {
     {

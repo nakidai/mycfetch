@@ -61,21 +61,21 @@ int main(int argc, char **argv)
         art = arts[0].art;
     }
 
-    char hostname[max_hostname_length];
-    char username[max_username_length];
-    char uptime[max_uptime_length];
+    char hostname[MAX_HOSTNAME_LENGTH];
+    char username[MAX_USERNAME_LENGTH];
+    char uptime[MAX_UPTIME_LENGTH];
 #ifdef _WIN32
     RTL_OSVERSIONINFOW version_buffer = {.dwOSVersionInfoSize = sizeof(RTL_OSVERSIONINFOW)};
     RtlGetVersion(&version_buffer);
-    GetUserNameA(username, max_username_length);
+    GetUserNameA(username, MAX_USERNAME_LENGTH);
 #else
     struct utsname uname_buf;
 
-    getlogin_r(username, max_username_length);
+    getlogin_r(username, MAX_USERNAME_LENGTH);
     uname(&uname_buf);
 #endif
-    gethostname(hostname, max_hostname_length);
-    getuptime(uptime, max_uptime_length);
+    gethostname(hostname, MAX_HOSTNAME_LENGTH);
+    getuptime(uptime, MAX_UPTIME_LENGTH);
 
     printf("%s %s@%s\n", art[0], username, hostname);
     printf("%s --\n",    art[1]);
